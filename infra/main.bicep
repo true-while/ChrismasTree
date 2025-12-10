@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 param environmentName string
-param location string
+param location string = 'canadaeast'
 
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, environmentName)
 
@@ -39,7 +39,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'TREE_SPEECH_KEY'
-          value: listKeys(speechService.id, speechService.apiVersion).key1
+          value: '' // To be set by post-deployment script
         }
         {
           name: 'TREE_REGION'
@@ -47,7 +47,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'TREE_CONTENT_SAFETY_ENDPOINT'
-          value: 'your-key-here'
+          value: '' // To be set by post-deployment script
         }
         {
           name: 'TREE_CLIENT_ID'
@@ -121,27 +121,6 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2024-04-01' = {
-  name: '${resourceToken}-webapp'
-  location: resourceGroup().location
-  kind: 'app'
-  properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      appSettings: [
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '14.17.0'
-        }
-      ]
-    }
-  }
-  tags: {
-    environment: 'production'
-  }
-}
-
 resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
   name: '${resourceToken}-speech'
   location: location
@@ -173,8 +152,3 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01' 
 }
 
 output RESOURCE_GROUP_ID string = resourceGroup().id
-output clientId string = '' // To be set by post-deployment script
-output tenantId string = '' // To be set by post-deployment script
-output TREE_SPEECH_KEY string = listKeys(speechService.id, speechService.apiVersion).key1
-output TREE_CONTENT_SAFETY_KEY string = listKeys(contentSafetyService.id, contentSafetyService.apiVersion).key1
-output TREE_CONTENT_SAFETY_ENDPOINT string = contentSafetyService.properties.endpoint
