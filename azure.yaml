@@ -1,6 +1,8 @@
 name: ChristmasTreeWebApp
+metadata:
+    template: azd-ctree@1.0.0
 services:
-  - name: ChristmasTreeWebApp
+  ChristmasTreeWebApp:
     project: ./src
     language: js
     host: appservice
