@@ -122,7 +122,7 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
 }
 
 resource webApp 'Microsoft.Web/sites@2024-04-01' = {
-  name: 'myWebApp'
+  name: '${resourceToken}-webapp'
   location: resourceGroup().location
   kind: 'app'
   properties: {
