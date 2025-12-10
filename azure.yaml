@@ -1,0 +1,6 @@
+name: ChristmasTreeWebApp
+services:
+  - name: ChristmasTreeWebApp
+    project: ./src
+    language: js
+    host: appservice

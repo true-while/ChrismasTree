@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Tree</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Welcome to the Christmas Tree!</h1>
+    <p>Click on the tree to craft a toy and make a wish!</p>
+    <a href="/create-wish.html">Create a Wish</a>
+    <div class="tree" onclick="craftToy()">
+        <div class="star"></div>
+    </div>
+
+    <h2>Wishes</h2>
+    <div class="wish-list" id="wish-list"></div>
+
+    <div class="dialog-overlay" id="dialog-overlay" onclick="closeDialog()"></div>
+    <div class="dialog" id="wish-dialog">
+        <h3 id="wish-text"></h3>
+        <p><strong>Author:</strong> <span id="wish-author"></span></p>
+        <audio id="wish-audio" controls></audio>
+        <button onclick="closeDialog()">Close</button>
+    </div>
+
+    <script>
+        async function fetchWishes() {
+            const response = await fetch('/wishes');
+            if (response.ok) {
+                const wishes = await response.json();
+                const wishList = document.getElementById('wish-list');
+                wishList.innerHTML = '';
+                wishes.forEach(wish => {
+                    const img = document.createElement('img');
+                    img.src = wish.icon;
+                    img.alt = 'Wish Icon';
+                    img.className = 'wish-item';
+                    img.onclick = () => showWishDialog(wish);
+                    wishList.appendChild(img);
+                });
+            } else {
+                console.error('Failed to fetch wishes');
+            }
+        }
+
+        function showWishDialog(wish) {
+            document.getElementById('wish-text').textContent = wish.text;
+            document.getElementById('wish-author').textContent = wish.author || 'Anonymous';
+            const audio = document.getElementById('wish-audio');
+            if (wish.audioData) {
+                try {
+                    audio.src = `data:audio/wav;base64,${wish.audioData}`;
+                    audio.style.display = 'block';
+                    console.log('Audio data loaded successfully');
+                } catch (error) {
+                    console.error('Failed to load audio data:', error);
+                    audio.style.display = 'none';
+                }
+            } else {
+                console.warn('No audio data available for this wish');
+                audio.style.display = 'none';
+            }
+            document.getElementById('dialog-overlay').style.display = 'block';
+            document.getElementById('wish-dialog').style.display = 'block';
+        }
+
+        function closeDialog() {
+            document.getElementById('dialog-overlay').style.display = 'none';
+            document.getElementById('wish-dialog').style.display = 'none';
+        }
+
+        function craftToy() {
+            const wish = prompt("What is your Christmas wish?");
+            if (wish) {
+                persistWish(wish);
+                alert(`Your wish: "${wish}" has been recorded!`);
+            }
+        }
+
+        async function persistWish(wish) {
+            const response = await fetch('/save-wish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ wish })
+            });
+
+            if (!response.ok) {
+                console.error('Failed to save wish');
+            }
+        }
+
+        // Fetch wishes on page load
+        fetchWishes();
+    </script>
+</body>
+</html>

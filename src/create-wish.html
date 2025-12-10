@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Wish</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+        }
+        .form-container {
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 300px;
+            background-color: #fff;
+        }
+        .form-container input, .form-container textarea, .form-container button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Create Your Wish</h1>
+    <div class="form-container">
+        <form id="wishForm">
+            <label for="icon">Select Icon:</label>
+            <div style="display: flex; justify-content: center; gap: 20px;">
+                <div style="text-align: center;">
+                    <label for="iconBall">
+                        <img src="ball.png" alt="Ball Icon" width="50" style="border: 1px solid #ccc; margin: 10px;">
+                    </label>
+                    <input type="radio" id="iconBall" name="icon" value="ball.png" required>
+                </div>
+                <div style="text-align: center;">
+                    <label for="iconYBall">
+                        <img src="yball.png" alt="Yellow Ball Icon" width="50" style="border: 1px solid #ccc; margin: 10px;">
+                    </label>
+                    <input type="radio" id="iconYBall" name="icon" value="yball.png" required>
+                </div>
+            </div>
+
+            <label for="text">Wish Text:</label>
+            <textarea id="text" name="text" placeholder="Enter your wish" rows="3" required style="border: 1px solid #ccc; margin: 10px; padding: 10px; width: 100%; border-radius: 5px;"></textarea>
+
+            <label for="author">Author Name:</label>
+            <input type="text" id="author" name="author" placeholder="Enter your name">
+
+            <label>
+                <input type="checkbox" id="anonymous" name="anonymous">
+                Post as Anonymous
+            </label>
+
+            <label for="audio">Record Audio:</label>
+            <button id="recordButton" type="button">Start Recording</button>
+            <button id="stopButton" type="button" disabled>Stop Recording</button>
+            <p id="recording-status">Maximum recording length: 1 minute.</p>
+            <audio id="audioPreview" controls></audio>
+            <input type="hidden" id="audioData" name="audioData">
+
+            <button type="submit">Submit Wish</button>
+        </form>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimeout;
+
+        const recordButton = document.getElementById('recordButton');
+        const stopButton = document.getElementById('stopButton');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioDataInput = document.getElementById('audioData');
+
+        recordButton.addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioChunks = [];
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPreview.src = audioUrl;
+
+                // Store the audio blob in a hidden input field as binary data
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    audioDataInput.value = reader.result.split(',')[1]; // Only store the base64 data part
+                };
+                reader.readAsDataURL(audioBlob);
+            };
+
+            mediaRecorder.start();
+            recordButton.disabled = true;
+            stopButton.disabled = false;
+            document.getElementById('recording-status').textContent = 'Recording...';
+
+            // Automatically stop recording after 1 minute
+            recordingTimeout = setTimeout(() => {
+                stopRecording();
+            }, 60000);
+        });
+
+        stopButton.addEventListener('click', () => {
+            stopRecording();
+        });
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearTimeout(recordingTimeout);
+                recordButton.disabled = false;
+                stopButton.disabled = true;
+                document.getElementById('recording-status').textContent = 'Recording stopped (max 1 minute).';
+            }
+        }
+
+        document.getElementById('wishForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const icon = document.querySelector('input[name="icon"]:checked').value;
+            const text = document.getElementById('text').value;
+            let author = document.getElementById('author').value;
+            const anonymous = document.getElementById('anonymous').checked;
+
+            if (anonymous) {
+                author = 'Anonymous';
+            }
+
+            const audioData = audioDataInput.value; // Only send audio data on form submission
+
+            const response = await fetch('/save-wish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ icon, text, author, audioData })
+            });
+
+            if (response.ok) {
+                alert('Wish submitted successfully!');
+                window.location.href = '/';
+            } else {
+                alert('Failed to submit wish.');
+            }
+        });
+
+        const anonymousCheckbox = document.getElementById('anonymous');
+        const authorInput = document.getElementById('author');
+
+        anonymousCheckbox.addEventListener('change', () => {
+            if (anonymousCheckbox.checked) {
+                authorInput.value = 'Anonymous';
+                authorInput.style.display = 'none';
+            } else {
+                authorInput.value = '';
+                authorInput.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

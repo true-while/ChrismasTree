@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Icon</th>
+                <th>Text</th>
+                <th>Author</th>
+                <th>Audio</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="wishes-table-body">
+            <!-- Wishes will be dynamically loaded here -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchWishes() {
+            const response = await fetch('/wishes');
+            if (response.ok) {
+                const wishes = await response.json();
+                const tableBody = document.getElementById('wishes-table-body');
+                tableBody.innerHTML = '';
+                wishes.forEach(wish => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${wish.id}</td>
+                        <td><img src="${wish.icon}" alt="Icon" width="30"></td>
+                        <td>${wish.text}</td>
+                        <td>${wish.author || 'Anonymous'}</td>
+                        <td>
+                            ${wish.audioData ? `<audio controls src="data:audio/wav;base64,${wish.audioData}"></audio>` : 'No Audio'}
+                        </td>
+                        <td>
+                            <button onclick="deleteWish(${wish.id})">Delete</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            } else {
+                console.error('Failed to fetch wishes');
+            }
+        }
+
+        async function deleteWish(id) {
+            const confirmed = confirm('Are you sure you want to delete this wish?');
+            if (confirmed) {
+                const response = await fetch(`/delete-wish/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert('Wish deleted successfully');
+                    fetchWishes();
+                } else {
+                    alert('Failed to delete wish');
+                }
+            }
+        }
+
+        // Fetch wishes on page load
+        fetchWishes();
+    </script>
+</body>
+</html>
