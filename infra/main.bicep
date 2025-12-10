@@ -121,9 +121,9 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
-resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
+resource speechService 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
   name: '${resourceToken}-speech'
-  location: location
+  location: 'global'
   kind: 'SpeechServices'
   sku: {
     name: 'S0'
@@ -136,9 +136,9 @@ resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
   }
 }
 
-resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
+resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
   name: '${resourceToken}-contentsafety'
-  location: location
+  location: 'global'
   kind: 'ContentSafety'
   sku: {
     name: 'S0'
