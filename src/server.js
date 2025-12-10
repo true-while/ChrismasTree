@@ -196,6 +196,15 @@ app.get('/protected', ensureAuthenticated, (req, res) => {
     res.send(`Hello ${req.session.user.name}, you are authenticated!`);
 });
 
+// Endpoint to fetch the user's UPN
+app.get('/api/user', (req, res) => {
+  if (req.user && req.user.upn) {
+    res.json({ upn: req.user.upn });
+  } else {
+    res.status(401).json({ error: 'User not authenticated' });
+  }
+});
+
 // Start the server
 const PORT = 3000;
 app.listen(PORT, () => {
