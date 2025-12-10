@@ -5,6 +5,18 @@ param location string
 
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, environmentName)
 
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
+  name: '${resourceToken}-plan'
+  location: location
+  tags: {
+    SecurityControl: 'Ignore'
+  }
+  sku: {
+    name: 'F1'
+    capacity: 1
+  }
+}
+
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: '${resourceToken}-webapp'
   location: location
@@ -20,6 +32,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   }
   properties: {
     serverFarmId: appServicePlan.id
+    httpsOnly: true
     siteConfig: {
       cors: {
         allowedOrigins: ['*']
@@ -27,34 +40,34 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       appSettings: [
         {
           name: 'TREE_CONTENT_SAFETY_KEY'
-          value: 'YOUR_CONTENT_SAFETY_KEY'
-        }
-        {
-          name: 'TREE_CONTENT_SAFETY_ENDPOINT'
-          value: 'YOUR_CONTENT_SAFETY_ENDPOINT'
+          value: 'your-key-here'
         }
         {
           name: 'TREE_SPEECH_KEY'
-          value: 'YOUR_SPEECH_KEY'
+          value: 'your-key-here'
+        }
+        {name:'TREE_REGION'
+      value: 'your-region-here'} 
+
+        {
+          name: 'TREE_CONTENT_SAFETY_ENDPOINT'
+          value: 'your-key-here'
+        }
+
+        {
+          name: 'TREE_CLIENT_ID'
+          value: ''
         }
         {
-          name: 'TREE_REGION'
-          value: 'YOUR_REGION'
+          name: 'TREE_TENANT_ID'
+          value: ''
+        }
+        {
+          name: 'TREE_CLIENT_SECRET'
+          value: ''
         }
       ]
     }
-  }
-}
-
-resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
-  name: '${resourceToken}-plan'
-  location: location
-  tags: {
-    SecurityControl: 'Ignore'
-  }
-  sku: {
-    name: 'F1'
-    capacity: 1
   }
 }
 
@@ -77,22 +90,6 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
     SecurityControl: 'Ignore'
   }
   properties: {}
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
-  name: '${resourceToken}-keyvault'
-  location: location
-  tags: {
-    SecurityControl: 'Ignore'
-  }
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    accessPolicies: []
-  }
 }
 
 resource servicePrincipal 'Microsoft.Web/sites@2021-02-01' = {
@@ -166,6 +163,27 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
       }
     ]
     assignableScopes: [resourceGroup().id]
+  }
+}
+
+resource webApp 'Microsoft.Web/sites@2024-04-01' = {
+  name: 'myWebApp'
+  location: resourceGroup().location
+  kind: 'app'
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'WEBSITE_NODE_DEFAULT_VERSION'
+          value: '14.17.0'
+        }
+      ]
+    }
+  }
+  tags: {
+    environment: 'production'
   }
 }
 

@@ -18,9 +18,9 @@ app.use(express.static('src'));
 // Entra ID Configuration
 const msalConfig = {
     auth: {
-        clientId: 'YOUR_CLIENT_ID', // Replace with your Client ID
-        authority: 'https://login.microsoftonline.com/YOUR_TENANT_ID', // Replace with your Tenant ID
-        clientSecret: 'YOUR_CLIENT_SECRET' // Replace with your Client Secret
+        clientId: 'TREE_CLIENT_ID', // Replace with your Client ID
+        authority: 'https://login.microsoftonline.com/TREE_TENANT_ID', // Replace with your Tenant ID
+        clientSecret: 'TREE_CLIENT_SECRET' // Replace with your Client Secret
     },
 };
 const msalClient = new ConfidentialClientApplication(msalConfig);
