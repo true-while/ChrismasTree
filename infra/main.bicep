@@ -24,12 +24,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
     azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${resourceToken}-identity': {}
-    }
-  }
+  kind: 'app'
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
@@ -40,31 +35,31 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       appSettings: [
         {
           name: 'TREE_CONTENT_SAFETY_KEY'
-          value: 'your-key-here'
+          value: '' // To be set by post-deployment script
         }
         {
           name: 'TREE_SPEECH_KEY'
-          value: 'your-key-here'
+          value: listKeys(speechService.id, speechService.apiVersion).key1
         }
-        {name:'TREE_REGION'
-      value: 'your-region-here'} 
-
+        {
+          name: 'TREE_REGION'
+          value: location
+        }
         {
           name: 'TREE_CONTENT_SAFETY_ENDPOINT'
           value: 'your-key-here'
         }
-
         {
           name: 'TREE_CLIENT_ID'
-          value: ''
+          value: '' // To be set by post-deployment script
         }
         {
           name: 'TREE_TENANT_ID'
-          value: ''
+          value: '' // To be set by post-deployment script
         }
         {
           name: 'TREE_CLIENT_SECRET'
-          value: ''
+          value: '' // To be set by post-deployment script
         }
       ]
     }
@@ -92,47 +87,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   properties: {}
 }
 
-resource servicePrincipal 'Microsoft.Web/sites@2021-02-01' = {
-  name: 'ChristmasTreeApp'
-  location: resourceGroup().location
-  properties: {
-    clientAffinityEnabled: true
-    httpsOnly: true
-  }
-}
-
-resource appRoles 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'ChristmasTreeAppRoles'
-  location: resourceGroup().location
-  properties: {
-    appRoles: [
-      {
-        id: guid('WisherRole')
-        displayName: 'Wisher'
-        description: 'Can create and view wishes'
-        value: 'Wisher'
-        allowedMemberTypes: ['User']
-        isEnabled: true
-      }
-      {
-        id: guid('AdminRole')
-        displayName: 'Admin'
-        description: 'Can manage all wishes and users'
-        value: 'Admin'
-        allowedMemberTypes: ['User']
-        isEnabled: true
-      }
-    ]
-  }
-}
-
-resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'ChristmasTreeAppIdentity'
-  location: resourceGroup().location
-  tags: {
-    SecurityControl: 'Ignore'
-  }
-}
+// Add post-deployment PowerShell script to handle App Registration and update Web App settings.
 
 resource wisherRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: guid(resourceGroup().id, 'WisherRole')
@@ -187,6 +142,39 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
   }
 }
 
+resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
+  name: '${resourceToken}-speech'
+  location: location
+  kind: 'SpeechServices'
+  sku: {
+    name: 'S0'
+  }
+  properties: {
+    apiProperties: {}
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
+}
+
+resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01' = {
+  name: '${resourceToken}-contentsafety'
+  location: location
+  kind: 'ContentSafety'
+  sku: {
+    name: 'S0'
+  }
+  properties: {
+    apiProperties: {}
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
+}
+
 output RESOURCE_GROUP_ID string = resourceGroup().id
-output clientId string = userAssignedIdentity.properties.clientId
-output tenantId string = subscription().tenantId
+output clientId string = '' // To be set by post-deployment script
+output tenantId string = '' // To be set by post-deployment script
+output TREE_SPEECH_KEY string = listKeys(speechService.id, speechService.apiVersion).key1
+output TREE_CONTENT_SAFETY_KEY string = listKeys(contentSafetyService.id, contentSafetyService.apiVersion).key1
+output TREE_CONTENT_SAFETY_ENDPOINT string = contentSafetyService.properties.endpoint

@@ -1,6 +1,29 @@
-name: ChristmasTreeWebApp
+name: christmastree-webapp
 metadata:
     template: azd-ctree@1.0.0
+hooks:
+  postprovision:
+    shell: pwsh
+    run: |
+      # PowerShell script to register App Service and update Web App settings
+      $appName = "ChristmasTreeWebApp"
+      $resourceGroup = az group list --query "[?contains(name, '$appName')].name" -o tsv
+      $webApp = az webapp list --resource-group $resourceGroup --query "[?contains(name, '$appName')].name" -o tsv
+      $tenantId = az account show --query tenantId -o tsv
+      $existingApp = az ad app list --filter "displayName eq '$appName'" --query "[0].appId" -o tsv
+      if (-not $existingApp) {
+        $appReg = az ad app create --display-name $appName
+        $clientId = $appReg.appId
+        $secret = az ad app credential reset --id $clientId --append --query password -o tsv
+      } else {
+        $clientId = $existingApp
+        $secret = az ad app credential reset --id $clientId --append --query password -o tsv
+      }
+      # Fetch Speech key from provisioned resource
+      $speechResourceName = "$($resourceGroup)-speech"
+      $treeSpeechKey = az cognitiveservices account keys list --name $speechResourceName --resource-group $resourceGroup --query key1 -o tsv
+      # Set additional environment variables for the Web App
+      az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_SPEECH_KEY=$treeSpeechKey TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
 services:
   ChristmasTreeWebApp:
     project: ./src
