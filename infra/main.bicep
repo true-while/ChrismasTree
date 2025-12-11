@@ -130,3 +130,6 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' 
 }
 
 output RESOURCE_GROUP_ID string = resourceGroup().id
+output RESOURCE_GROUP string = resourceGroup().name
+output AZURE_LOCATION string = location
+output WEB_APP_NAME string = appService.name
