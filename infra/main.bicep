@@ -66,6 +66,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: '${resourceToken}-appinsights'
   location: location
   tags: {
+    azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
   kind: 'web'
