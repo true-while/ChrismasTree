@@ -136,7 +136,8 @@ resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview'
   }
 }
 
-resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
+
+resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
   name: '${resourceToken}-contentsafety'
   location: 'global'
   kind: 'ContentSafety'
@@ -144,11 +145,8 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01-p
     name: 'S0'
   }
   properties: {
-    apiProperties: {}
-    networkAcls: {
-      defaultAction: 'Allow'
-    }
   }
 }
+
 
 output RESOURCE_GROUP_ID string = resourceGroup().id
