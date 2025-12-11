@@ -39,6 +39,14 @@ hooks:
         $endDate = (Get-Date).AddDays(10).ToString("yyyy-MM-dd")
         $secret = az ad app credential reset --id $clientId --append --end-date $endDate --query password -o tsv
       }
+      # Add redirect URIs for MSAL and Easy Auth
+      $redirectUris = @(
+        "https://$webApp.azurewebsites.net/redirect",
+        "https://$webApp.azurewebsites.net/.auth/login/aad/callback",
+        "http://localhost:3000/redirect"
+      )
+      Write-Host "Updating app registration redirect URIs and enabling ID tokens..."
+      az ad app update --id $clientId --reply-urls $redirectUris --enable-id-token-issuance true
       # Set additional environment variables for the Web App
       Write-Host "Setting environment variables for the Web App..."
       $treeRegion = $env:AZURE_LOCATION
