@@ -136,7 +136,7 @@ resource speechService 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
   }
 }
 
-resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
+resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
   name: '${resourceToken}-contentsafety'
   location: 'global'
   kind: 'ContentSafety'
