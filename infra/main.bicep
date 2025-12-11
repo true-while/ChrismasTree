@@ -121,7 +121,7 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
-resource speechService 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
+resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
   name: '${resourceToken}-speech'
   location: 'global'
   kind: 'SpeechServices'
