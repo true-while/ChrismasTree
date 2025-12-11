@@ -38,10 +38,6 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
           value: '' // To be set by post-deployment script
         }
         {
-          name: 'TREE_SPEECH_KEY'
-          value: '' // To be set by post-deployment script
-        }
-        {
           name: 'TREE_REGION'
           value: location
         }
@@ -121,22 +117,6 @@ resource adminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
-resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
-  name: '${resourceToken}-speech'
-  location: 'global'
-  kind: 'SpeechServices'
-  sku: {
-    name: 'S0'
-  }
-  properties: {
-    apiProperties: {}
-    networkAcls: {
-      defaultAction: 'Allow'
-    }
-  }
-}
-
-
 resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
   name: '${resourceToken}-contentsafety'
   location: location
@@ -147,6 +127,5 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' 
   properties: {
   }
 }
-
 
 output RESOURCE_GROUP_ID string = resourceGroup().id

@@ -19,11 +19,8 @@ hooks:
         $clientId = $existingApp
         $secret = az ad app credential reset --id $clientId --append --query password -o tsv
       }
-      # Fetch Speech key from provisioned resource
-      $speechResourceName = "$($resourceGroup)-speech"
-      $treeSpeechKey = az cognitiveservices account keys list --name $speechResourceName --resource-group $resourceGroup --query key1 -o tsv
       # Set additional environment variables for the Web App
-      az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_SPEECH_KEY=$treeSpeechKey TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
+      az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
 services:
   ChristmasTreeWebApp:
     project: ./src
