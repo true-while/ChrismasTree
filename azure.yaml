@@ -23,8 +23,13 @@ hooks:
       $existingApp = az ad app list --filter "displayName eq '$appName'" --query "[0].appId" -o tsv
       if (-not $existingApp) {
         Write-Host "Creating new application registration for $appName"
-        $appReg = az ad app create --display-name $appName
+        $appRegRaw = az ad app create --display-name $appName --output json
+        $appReg = $appRegRaw | ConvertFrom-Json
         $clientId = $appReg.appId
+        if (-not $clientId) {
+          Write-Error "Failed to retrieve Client ID from app registration. Exiting."
+          exit 3
+        }
         Write-Host "Application created with Client ID: $clientId"
         $endDate = (Get-Date).AddDays(10).ToString("yyyy-MM-dd")
         $secret = az ad app credential reset --id $clientId --append --end-date $endDate --query password -o tsv
