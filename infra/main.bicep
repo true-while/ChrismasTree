@@ -9,6 +9,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: '${resourceToken}-plan'
   location: location
   tags: {
+    azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
   sku: {
@@ -79,6 +80,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: '${resourceToken}-loganalytics'
   location: location
   tags: {
+    azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
   properties: {}
@@ -129,6 +131,7 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' 
     disableLocalAuth: false
   }
   tags: {
+    azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
 }
