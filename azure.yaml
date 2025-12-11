@@ -6,21 +6,36 @@ hooks:
     shell: pwsh
     run: |
       # PowerShell script to register App Service and update Web App settings
+      Write-Host "Registering App Service and updating Web App settings..."
       $appName = "ChristmasTreeWebApp"
-      $resourceGroup = az group list --query "[?contains(name, '$appName')].name" -o tsv
-      $webApp = az webapp list --resource-group $resourceGroup --query "[?contains(name, '$appName')].name" -o tsv
+      $resourceGroup = (az group list --query "[?contains(name, '$appName')].name" -o tsv)
+      if (-not $resourceGroup) {
+        Write-Error "Resource group containing '$appName' not found. Exiting."
+        exit 2
+      }
+      $webApp = (az webapp list --resource-group $resourceGroup --query "[?contains(name, '$appName')].name" -o tsv)
+      if (-not $webApp) {
+        Write-Error "Web App containing '$appName' not found in resource group '$resourceGroup'. Exiting."
+        exit 2
+      }
       $tenantId = az account show --query tenantId -o tsv
       $existingApp = az ad app list --filter "displayName eq '$appName'" --query "[0].appId" -o tsv
       if (-not $existingApp) {
+        Write-Host "Creating new application registration for $appName"
         $appReg = az ad app create --display-name $appName
         $clientId = $appReg.appId
         $secret = az ad app credential reset --id $clientId --append --query password -o tsv
       } else {
+        Write-Host "Application already exists. Using existing application."
         $clientId = $existingApp
         $secret = az ad app credential reset --id $clientId --append --query password -o tsv
       }
       # Set additional environment variables for the Web App
+      Write-Host "Setting environment variables for the Web App..."
+      $treeRegion = "$location"
+      $treeContentSafetyKey = "" # Set this if available from deployment outputs or secrets
       az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
+      Write-Host "Done."
 services:
   ChristmasTreeWebApp:
     project: ./src
