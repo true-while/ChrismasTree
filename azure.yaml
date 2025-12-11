@@ -25,11 +25,14 @@ hooks:
         Write-Host "Creating new application registration for $appName"
         $appReg = az ad app create --display-name $appName
         $clientId = $appReg.appId
-        $secret = az ad app credential reset --id $clientId --append --query password -o tsv
+        Write-Host "Application created with Client ID: $clientId"
+        $endDate = (Get-Date).AddDays(10).ToString("yyyy-MM-dd")
+        $secret = az ad app credential reset --id $clientId --append --end-date $endDate --query password -o tsv
       } else {
         Write-Host "Application already exists. Using existing application."
         $clientId = $existingApp
-        $secret = az ad app credential reset --id $clientId --append --query password -o tsv
+        $endDate = (Get-Date).AddDays(10).ToString("yyyy-MM-dd")
+        $secret = az ad app credential reset --id $clientId --append --end-date $endDate --query password -o tsv
       }
       # Set additional environment variables for the Web App
       Write-Host "Setting environment variables for the Web App..."

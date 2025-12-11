@@ -127,6 +127,9 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' 
   properties: {
     disableLocalAuth: false
   }
+  tags: {
+    SecurityControl: 'Ignore'
+  }
 }
 
 output RESOURCE_GROUP_ID string = resourceGroup().id
