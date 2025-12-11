@@ -5,6 +5,7 @@ hooks:
   postprovision:
     shell: pwsh
     run: |
+      az account show
       # PowerShell script to register App Service and update Web App settings
       Write-Host "Registering App Service and updating Web App settings..."
       # Use resource group and web app name from Bicep outputs (injected as environment variables by azd)
