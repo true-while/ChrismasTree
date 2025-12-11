@@ -1,8 +1,6 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
-const session = require('express-session');
-const { ConfidentialClientApplication } = require('@azure/msal-node');
 const { SpeechConfig, AudioConfig, SpeechRecognizer } = require('microsoft-cognitiveservices-speech-sdk');
 const axios = require('axios');
 
@@ -14,16 +12,6 @@ app.use(bodyParser.json({ limit: '10mb' }));
 
 // Serve static files from the src directory
 app.use(express.static('src'));
-
-// Entra ID Configuration
-const msalConfig = {
-    auth: {
-        clientId: 'TREE_CLIENT_ID', // Replace with your Client ID
-        authority: 'https://login.microsoftonline.com/TREE_TENANT_ID', // Replace with your Tenant ID
-        clientSecret: 'TREE_CLIENT_SECRET' // Replace with your Client Secret
-    },
-};
-const msalClient = new ConfidentialClientApplication(msalConfig);
 
 // Azure Cognitive Services Configuration
 const speechConfig = SpeechConfig.fromSubscription('TREE_SPEECH_KEY', 'TREE_REGION'); // Replace with your Speech Service key and region
@@ -64,46 +52,29 @@ async function validateContent(text) {
     }
 }
 
-// Session Middleware
-app.use(session({
-    secret: 'your-session-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false } // Set to true if using HTTPS
-}));
-
-// Authentication Middleware
-app.get('/login', (req, res) => {
-    const authCodeUrlParameters = {
-        scopes: ["user.read"],
-        redirectUri: "http://localhost:3000/redirect",
-    };
-
-    msalClient.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-        res.redirect(response);
-    }).catch((error) => console.log(JSON.stringify(error)));
-});
-
-app.get('/redirect', (req, res) => {
-    const tokenRequest = {
-        code: req.query.code,
-        scopes: ["user.read"],
-        redirectUri: "http://localhost:3000/redirect",
-    };
-
-    msalClient.acquireTokenByCode(tokenRequest).then((response) => {
-        req.session.user = response.account;
-        res.redirect('/');
-    }).catch((error) => console.log(JSON.stringify(error)));
-});
-
-// Protect Routes Middleware
-function ensureAuthenticated(req, res, next) {
-    if (req.session.user) {
-        next();
-    } else {
-        res.redirect('/login');
+// Middleware to get user info from Easy Auth headers
+function getUserFromEasyAuth(req) {
+    if (req.headers['x-ms-client-principal']) {
+        const encoded = req.headers['x-ms-client-principal'];
+        const buff = Buffer.from(encoded, 'base64');
+        try {
+            return JSON.parse(buff.toString('utf8'));
+        } catch (e) {
+            return null;
+        }
     }
+    return null;
+}
+
+// Middleware to require authentication via Easy Auth
+function ensureAuthenticated(req, res, next) {
+    const user = getUserFromEasyAuth(req);
+    if (user && user.userDetails) {
+        req.user = user;
+        return next();
+    }
+    // Not authenticated, redirect to login
+    res.redirect('/.auth/login/aad');
 }
 
 // Initialize database
@@ -119,8 +90,8 @@ const initDb = () => {
 
 initDb();
 
-// Updated Endpoint to save a wish
-app.post('/save-wish', async (req, res) => {
+// Updated Endpoint to save a wish (public or protected as needed)
+app.post('/save-wish', ensureAuthenticated, async (req, res) => {
     const { icon, text, author, audioData } = req.body;
     if (!text || !icon) {
         return res.status(400).send('Icon and text are required');
@@ -151,8 +122,8 @@ app.post('/save-wish', async (req, res) => {
     });
 });
 
-// Endpoint to retrieve all wishes
-app.get('/wishes', (req, res) => {
+// Endpoint to retrieve all wishes (public or protected as needed)
+app.get('/wishes', ensureAuthenticated, (req, res) => {
     db.all('SELECT * FROM wishes', [], (err, rows) => {
         if (err) {
             console.error(err);
@@ -170,8 +141,12 @@ app.get('/wishes', (req, res) => {
     });
 });
 
-// Endpoint to delete a wish
+// Endpoint to delete a wish (admin only)
 app.delete('/delete-wish/:id', ensureAuthenticated, (req, res) => {
+    const user = req.user;
+    if (!user || !user.userRoles || !user.userRoles.includes('admin')) {
+        return res.status(403).send('Access denied');
+    }
     const wishId = req.params.id;
     db.run('DELETE FROM wishes WHERE id = ?', [wishId], function(err) {
         if (err) {
@@ -182,9 +157,10 @@ app.delete('/delete-wish/:id', ensureAuthenticated, (req, res) => {
     });
 });
 
-// Serve the admin page
+// Serve the admin page (admin only)
 app.get('/admin', ensureAuthenticated, (req, res) => {
-    if (req.session.user.roles && req.session.user.roles.includes('Admin')) {
+    const user = req.user;
+    if (user && user.userRoles && user.userRoles.includes('admin')) {
         res.sendFile(__dirname + '/admin.html');
     } else {
         res.status(403).send('Access denied');
@@ -193,16 +169,16 @@ app.get('/admin', ensureAuthenticated, (req, res) => {
 
 // Example Protected Route
 app.get('/protected', ensureAuthenticated, (req, res) => {
-    res.send(`Hello ${req.session.user.name}, you are authenticated!`);
+    res.send(`Hello ${req.user.userDetails}, you are authenticated!`);
 });
 
 // Endpoint to fetch the user's UPN
-app.get('/api/user', (req, res) => {
-  if (req.user && req.user.upn) {
-    res.json({ upn: req.user.upn });
-  } else {
-    res.status(401).json({ error: 'User not authenticated' });
-  }
+app.get('/api/user', ensureAuthenticated, (req, res) => {
+    if (req.user && req.user.userDetails) {
+        res.json({ upn: req.user.userDetails });
+    } else {
+        res.status(401).json({ error: 'User not authenticated' });
+    }
 });
 
 // Start the server
