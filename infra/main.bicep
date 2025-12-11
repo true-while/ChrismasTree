@@ -9,7 +9,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: '${resourceToken}-plan'
   location: location
   tags: {
-    'azd-service-name': 'ChristmasTreeWebApp'
+    azdServiceName: 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
   sku: {
@@ -23,6 +23,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   location: location
   tags: {
     azdServiceName: 'ChristmasTreeWebApp'
+        'azd-service-name': 'ChristmasTreeWebApp'
     SecurityControl: 'Ignore'
   }
   kind: 'app'
