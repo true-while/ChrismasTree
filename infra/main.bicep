@@ -125,6 +125,7 @@ resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' 
     name: 'S0'
   }
   properties: {
+    disableLocalAuth: false
   }
 }
 
