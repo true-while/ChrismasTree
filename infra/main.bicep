@@ -139,7 +139,7 @@ resource speechService 'Microsoft.CognitiveServices/accounts@2023-10-01-preview'
 
 resource contentSafetyService 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
   name: '${resourceToken}-contentsafety'
-  location: 'global'
+  location: location
   kind: 'ContentSafety'
   sku: {
     name: 'S0'
