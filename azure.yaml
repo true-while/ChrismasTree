@@ -51,7 +51,7 @@ hooks:
       Write-Host "Setting environment variables for the Web App..."
       $treeRegion = $env:AZURE_LOCATION
       $treeContentSafetyKey = "" # Set this if available from deployment outputs or secrets
-      az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
+      $r = az webapp config appsettings set --name $webApp --resource-group $resourceGroup --settings TREE_CLIENT_ID=$clientId TREE_TENANT_ID=$tenantId TREE_CLIENT_SECRET=$secret TREE_REGION=$treeRegion TREE_CONTENT_SAFETY_KEY=$treeContentSafetyKey
       Write-Host "Done."
 services:
   ChristmasTreeWebApp:
